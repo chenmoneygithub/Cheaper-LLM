@@ -20,6 +20,14 @@ setup(
     license="Apache License 2.0",
     # Supported Python versions
     python_requires=">=3.8",
+    install_requires=[
+        "absl-py",
+        "numpy",
+        "langchain",
+        "torch",
+        "transformers",
+        "openai",
+    ],
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python :: 3",
