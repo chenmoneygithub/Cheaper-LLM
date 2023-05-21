@@ -116,7 +116,7 @@ class ModelCascading:
             # using BPE tokenizer or SPE tokenizer.
             total_tokens = (len(prompt) + len(response)) * 1.15
             rough_cost += total_tokens * price / 1000.0
-            if response_score > 70:
+            if response_score > 88:
                 if self.cache is not None:
                     self.cache.put(prompt, response, model)
                 return {

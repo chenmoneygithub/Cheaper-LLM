@@ -27,7 +27,7 @@ MODEL_COLLECTION = {
             "generate": {
                 "args": {},
                 "kwargs": {
-                    "max_new_tokens": 100,
+                    "max_new_tokens": 18,
                     "penalty_alpha": 0.2,
                     "top_k": 5,
                 },
