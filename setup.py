@@ -16,7 +16,7 @@ setup(
     version="0.0.1",
     url="https://github.com/chenmoneygithub/Cheaper-LLM",
     author="chenmoney",
-    author_email="youhavenowaytoreachme@gmail.com",
+    author_email="qianchen94era@gmail.com",
     license="Apache License 2.0",
     # Supported Python versions
     python_requires=">=3.8",
