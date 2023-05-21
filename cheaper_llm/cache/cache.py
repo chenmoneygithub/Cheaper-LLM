@@ -8,10 +8,11 @@ from redis.commands.search.query import Query
 from sentence_transformers import SentenceTransformer
 
 INDEX_NAME = "prompt_cache"  # Vector Index Name
+DOC_PREFIX = "doc: "
 
 
 class PromptCache:
-    def __init__(self, cache_file, query_threshold=0.9):
+    def __init__(self, cache_file=None, query_threshold=0.9):
         self.redis_client = redis.Redis(host="localhost", port=6379)
         self.redis_pipe = self.redis_client.pipeline()
         self._create_index(vector_dimensions=384)
@@ -21,10 +22,10 @@ class PromptCache:
         self.counter = 0
         self.query_threshold = query_threshold
 
-    def _create_index(vector_dimensions: int):
+    def _create_index(self, vector_dimensions):
         try:
             # check to see if index exists
-            r.ft(INDEX_NAME).info()
+            self.redis_client.ft(INDEX_NAME).info()
             print("Index already exists!")
         except:
             # schema
@@ -48,26 +49,26 @@ class PromptCache:
             )
 
             # create Index
-            r.ft(INDEX_NAME).create_index(
+            self.redis_client.ft(INDEX_NAME).create_index(
                 fields=schema,
                 definition=definition,
             )
 
-    def put(prompt, response):
+    def put(self, prompt, response):
         embeddings = np.array(self.encoder.encode(prompt))
         self.counter += 1
         self.redis_pipe.hset(
             f"doc:{self.counter}",
             mapping={
-                "vector": embedding.tobytes(),
+                "vector": embeddings.tobytes(),
                 "content": response,
                 "tag": "cheaper_llm",
             },
         )
-        res = pipe.execute()
+        self.redis_pipe.execute()
 
-    def read(prompt):
-        query_embedding = np.array(model.encode(query_text))
+    def read(self, prompt):
+        query_embedding = np.array(self.encoder.encode(prompt))
         query = (
             Query("(@tag:{ cheaper_llm })=>[KNN 2 @vector $vec as score]")
             .sort_by("score")

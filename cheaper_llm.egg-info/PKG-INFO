@@ -1,0 +1,42 @@
+Metadata-Version: 2.1
+Name: cheaper-llm
+Version: 0.0.1
+Summary: Make your LLM call cheaper.
+Home-page: https://github.com/chenmoneygithub/Cheaper-LLM
+Author: chenmoney
+Author-email: youhavenowaytoreachme@gmail.com
+License: Apache License 2.0
+Classifier: Development Status :: 3 - Alpha
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Operating System :: Unix
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: MacOS
+Classifier: Intended Audience :: Science/Research
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Software Development
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+
+# Cheaper-LLM
+
+Roadmap:
+
+## Cache
+Don't fire any queries if we can find a similar one.
+
+## Model Cascading
+Pick up the right model from our model collection.
+
+## Prompt Adaptation
+We can do:
+- Prompt pruning, we need to understand the price model for each service.
+- Per-model prompt customization. 
+- Task aware prompt adaptation.
+
+We can start with cache. 
