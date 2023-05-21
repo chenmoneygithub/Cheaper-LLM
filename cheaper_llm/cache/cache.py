@@ -8,13 +8,15 @@ from redis.commands.search.query import Query
 from sentence_transformers import SentenceTransformer
 
 INDEX_NAME = "prompt_cache"  # Vector Index Name
-DOC_PREFIX = "doc: "
+DOC_PREFIX = "doc:"
 
 
 class PromptCache:
-    def __init__(self, cache_file=None, query_threshold=0.9):
+    def __init__(self, cache_file=None, query_threshold=0.9, reset=False):
         self.redis_client = redis.Redis(host="localhost", port=6379)
         self.redis_pipe = self.redis_client.pipeline()
+        if reset:
+            self.reset()
         self._create_index(vector_dimensions=384)
         self.encoder = SentenceTransformer(
             "sentence-transformers/all-MiniLM-L6-v2"
@@ -62,29 +64,32 @@ class PromptCache:
             mapping={
                 "vector": embeddings.tobytes(),
                 "content": response,
-                "tag": "cheaper_llm",
+                "tag": "cheaper",
             },
         )
-        self.redis_pipe.execute()
+        res = self.redis_pipe.execute()
 
-    def read(self, prompt):
+    def get(self, prompt):
         query_embedding = np.array(self.encoder.encode(prompt))
         query = (
-            Query("(@tag:{ cheaper_llm })=>[KNN 2 @vector $vec as score]")
+            Query("(@tag:{ cheaper })=>[KNN 2 @vector $vec as score]")
             .sort_by("score")
-            .return_fields("id", "score")
-            .paging(0, 1)
+            .return_fields("content", "tag", "score")
+            .paging(0, 2)
             .dialect(2)
         )
 
-        # Find all vectors within 0.8 of the query vector
         query_params = {
-            "radius": 1 - self.query_threshold,
+            # "radius": 1 - self.query_threshold,
             "vec": query_embedding.tobytes(),
         }
         cache_response = (
             self.redis_client.ft(INDEX_NAME).search(query, query_params).docs
         )
+        import pdb; pdb.set_trace()
         if len(cache_response) == 0:
             return None
         return cache_response[0]["content"]
+    
+    def reset(self):
+        self.redis_client.ft(INDEX_NAME).dropindex(delete_documents=True)
