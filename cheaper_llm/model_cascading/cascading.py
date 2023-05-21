@@ -2,8 +2,9 @@ import re
 
 import langchain
 import torch
+from absl import logging
 
-from cheaper_llm.cache import Cache
+from cheaper_llm.cache import PromptCache
 from cheaper_llm.model_cascading.model_collection import MODEL_COLLECTION
 from cheaper_llm.model_cascading.model_collection import MODEL_ORDER
 from cheaper_llm.model_cascading.prompts_utils import generate_scoring_prompt
@@ -14,6 +15,7 @@ def is_gpu_available():
 
 
 def get_model_response(model, prompt):
+    logging.info(f"Trying model {model}...")
     model_meta = MODEL_COLLECTION[model]
     source = model_meta["source"]
     if source == "huggingface":
@@ -29,9 +31,12 @@ def get_model_response(model, prompt):
 
         inputs = tokenizer(prompt, return_tensors="pt")
         if is_gpu_available:
-            inputs = inputs.to_device("cuda")
-        outputs = model.generate(inputs, penalty_alpha=0.2, top_k=5)
-        return tokenizer.decode(outputs[0])
+            inputs = inputs.to("cuda")
+        generate_info = model_meta["huggingface"]["generate"]
+        outputs = model.generate(**inputs, **generate_info["kwargs"])
+        decoded = tokenizer.decode(outputs[0])
+        decoded = decoded[len(prompt) :].strip()
+        return decoded
     elif source == "langchain":
         model_info = model_meta["langchain"]["model"]
         model = model_info["class"](*model_info["args"], **model_info["kwargs"])
@@ -54,10 +59,23 @@ class ModelCascading:
         else:
             self.scoring_model = scoring_model
 
-        self.cache = Cache()
+        self.cache = PromptCache()
 
     def __call__(self, prompt):
         rough_cost = 0
+        cache_read = self.cache.get(prompt)
+        candidate_models = self.candidate_models
+        if cache_read is not None:
+            score = cache_read["score"]
+            model_used = cache_read["model"]
+            if score > 0.88:
+                return cache_read["content"]
+            elif score > 0.5:
+                if model_used in candidate_models:
+                    # Start from a decent model.
+                    index = candidate_models.index(model_used)
+                    candidate_models = candidate_models[index:]
+
         for model in self.candidate_models:
             price = MODEL_COLLECTION[model]["price"]
             response = get_model_response(model, prompt).strip()
@@ -82,4 +100,7 @@ class ModelCascading:
         rating_prompt = generate_scoring_prompt(prompt, response)
         search_pattern = "[0-9]+"
         score_response = self.scoring_model(rating_prompt)
-        return int(re.search(search_pattern, score_response).group())
+        score = re.search(search_pattern, score_response)
+        if score is None:
+            return 0
+        return int(score.group())

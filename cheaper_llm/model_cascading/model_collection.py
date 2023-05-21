@@ -24,6 +24,14 @@ MODEL_COLLECTION = {
                 },
                 "kwargs": {},
             },
+            "generate": {
+                "args": {},
+                "kwargs": {
+                    "max_new_tokens": 100,
+                    "penalty_alpha": 0.2,
+                    "top_k": 5,
+                },
+            },
         },
         "price": 0,  # Per 1k tokens.
     },

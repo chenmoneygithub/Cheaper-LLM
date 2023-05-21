@@ -1,6 +1,7 @@
 import cheaper_llm
 
-candidate_models = ["text-babbage-001", "gpt-3.5-turbo"]
+candidate_models = ["pythia-6.9b", "text-babbage-001", "gpt-3.5-turbo"]
+# candidate_models = ["pythia-6.9b"]
 
 model_cascading = cheaper_llm.model_cascading.ModelCascading(candidate_models)
 

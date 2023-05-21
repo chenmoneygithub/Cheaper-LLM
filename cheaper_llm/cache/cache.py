@@ -56,7 +56,7 @@ class PromptCache:
                 definition=definition,
             )
 
-    def put(self, prompt, response):
+    def put(self, prompt, response, model):
         embeddings = np.array(self.encoder.encode(prompt))
         self.counter += 1
         self.redis_pipe.hset(
@@ -64,32 +64,36 @@ class PromptCache:
             mapping={
                 "vector": embeddings.tobytes(),
                 "content": response,
+                "model": model,
                 "tag": "cheaper",
             },
         )
-        res = self.redis_pipe.execute()
+        self.redis_pipe.execute()
 
     def get(self, prompt):
         query_embedding = np.array(self.encoder.encode(prompt))
         query = (
             Query("(@tag:{ cheaper })=>[KNN 2 @vector $vec as score]")
             .sort_by("score")
-            .return_fields("content", "tag", "score")
+            .return_fields("content", "tag", "score", "model")
             .paging(0, 2)
             .dialect(2)
         )
 
         query_params = {
-            # "radius": 1 - self.query_threshold,
+            "radius": 1 - self.query_threshold,
             "vec": query_embedding.tobytes(),
         }
         cache_response = (
             self.redis_client.ft(INDEX_NAME).search(query, query_params).docs
         )
-        import pdb; pdb.set_trace()
         if len(cache_response) == 0:
             return None
-        return cache_response[0]["content"]
-    
+        return {
+            "content": cache_response[0]["content"],
+            "model": cache_response[0]["model"],
+            "score": cache_response[0]["score"],
+        }
+
     def reset(self):
         self.redis_client.ft(INDEX_NAME).dropindex(delete_documents=True)
