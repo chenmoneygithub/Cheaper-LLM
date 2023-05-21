@@ -4,13 +4,13 @@ from transformers import AutoTokenizer
 from transformers import GPTNeoXForCausalLM
 
 MODEL_COLLECTION = {
-    "pythia-6.9b": {
+    "pythia-2.8b": {
         "source": "huggingface",
         "huggingface": {
             "model": {
                 "class": GPTNeoXForCausalLM,
                 "args": {
-                    "EleutherAI/pythia-6.9b",
+                    "EleutherAI/pythia-2.8b",
                 },
                 "kwargs": {
                     "torch_dtype": torch.float16,
@@ -20,7 +20,7 @@ MODEL_COLLECTION = {
             "tokenizer": {
                 "class": AutoTokenizer,
                 "args": {
-                    "EleutherAI/pythia-6.9b",
+                    "EleutherAI/pythia-2.8b",
                 },
                 "kwargs": {},
             },
@@ -65,4 +65,4 @@ MODEL_COLLECTION = {
     },
 }
 
-MODEL_ORDER = ["pythia-6.9b", "text-babbage-001", "gpt-3.5-turbo"]
+MODEL_ORDER = ["pythia-2.8b", "text-babbage-001", "gpt-3.5-turbo"]
